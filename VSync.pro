@@ -32,8 +32,6 @@ SOURCES += \
     opengldisplay.cpp \
     openglrendersurface.cpp \
     openglrenderwindow.cpp \
-    openglnativerenderwindow.cpp \
-    videothread.cpp \
     trianglerenderer.cpp \
     invertfilter.cpp
 
@@ -43,8 +41,6 @@ HEADERS += \
     opengldisplay.h \
     openglrendersurface.h \
     openglrenderwindow.h \
-    openglnativerenderwindow.h \
-    videothread.h \
     trianglerenderer.h \
     invertfilter.h
 

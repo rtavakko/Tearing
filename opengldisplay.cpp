@@ -37,9 +37,6 @@ void OpenGLDisplay::exposeEvent(QExposeEvent *event)
 
 void OpenGLDisplay::resizeEvent(QResizeEvent *event)
 {
-    if(!isExposed())
-        return;
-
     //TODO: FIX THIS; THE CONTEXT HAS TO BE ALREADY CREATED BY NOW SO NOT HAVING THIS SHOULDN'T CAUSE A CRASH
     if(!openGLContext)
         return;
@@ -55,7 +52,6 @@ void OpenGLDisplay::resizeEvent(QResizeEvent *event)
     QWindow::resize(QSize(w,h));
     OpenGLRenderer::resize(w,h);
 
-    swapSurfaceBuffers();
     doneContextCurrent();
 }
 
@@ -71,9 +67,6 @@ void OpenGLDisplay::unlockSize()
 
 void OpenGLDisplay::resize(unsigned int w, unsigned int h)
 {
-    if(!isExposed())
-        return;
-
     if(!makeContextCurrent())
         return;
 
@@ -82,7 +75,6 @@ void OpenGLDisplay::resize(unsigned int w, unsigned int h)
     QWindow::resize(QSize(w,h));
     OpenGLRenderer::resize(w,h);
 
-    swapSurfaceBuffers();
     doneContextCurrent();
 }
 

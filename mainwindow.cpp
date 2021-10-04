@@ -23,8 +23,6 @@ MainWindow::MainWindow(QWidget *parent,
     renderThread(nullptr),
     filterThread(nullptr),
     numDisplays(numDisplayWindows),
-    previewDisplay(nullptr),
-    videoRenderThread(nullptr),
     textRefreshTime(150)
 {
     ui->setupUi(this);
@@ -78,7 +76,7 @@ bool MainWindow::initialize()
         delete triangleRenderer;
         triangleRenderer = nullptr;
 
-        foreach(OpenGLDisplay* display, textureDisplay)
+        foreach(OpenGLDisplay* display, displays)
         {
             delete display;
             display = nullptr;
@@ -93,50 +91,23 @@ bool MainWindow::initialize()
                                                    QSurfaceFormat::defaultFormat(),
                                                    invertFilter->getOpenGLContext());
         QObject::connect(invertFilter,&OpenGLRenderSurface::frameReady,display,&OpenGLDisplay::setFrame);
+        //display->resize(videoSpecs.frameType.width,videoSpecs.frameType.height);
         display->show();
 
         //Update the size of every display except for the first one
         if(i != 0)
             QObject::connect(this,&MainWindow::screenChanged,display,&OpenGLDisplay::setScreen);
 
-        textureDisplay.push_back(display);
+        displays.push_back(display);
     }
 
     QObject::connect(this,&MainWindow::screenChanged,triangleRenderer,&OpenGLRenderSurface::setScreen);
     //The first display causes size update signal to fire to update all the other displays
-    if(textureDisplay.size() != 0)
-        QObject::connect(textureDisplay[0],&OpenGLDisplay::screenChanged,this,[=](QScreen* screen)
+    if(displays.size() != 0)
+        QObject::connect(displays[0],&OpenGLDisplay::screenChanged,this,[=](QScreen* screen)
         {
             emit screenChanged(screen);
         });
-
-    return true;
-}
-
-bool MainWindow::initializeThreaded()
-{
-    //Renderer
-    triangleRenderer = new TriangleRenderer(mainOutputScreen,
-                                            nullptr,
-                                            videoSpecs,
-                                            QSurfaceFormat::defaultFormat(),
-                                            nullptr);
-    videoRenderThread = new VideoThread(triangleRenderer);
-    triangleRenderer->moveToThread(videoRenderThread);
-
-    QObject::connect(this,&MainWindow::setRenderFPS,triangleRenderer,&OpenGLRenderSurface::setFrameRate);
-
-    QObject::connect(videoRenderThread,&QThread::started,triangleRenderer,&OpenGLRenderSurface::start);
-    QObject::connect(videoRenderThread,&QThread::finished,this,[=]()
-    {
-        delete triangleRenderer;
-        triangleRenderer = nullptr;
-    });
-
-    //Displays
-    QObject::connect(triangleRenderer,&OpenGLRenderSurface::frameReady,videoRenderThread,&VideoThread::setFrame);
-
-    //qDebug()<<QString("GUI thread:")<<QThread::currentThreadId();
 
     return true;
 }
@@ -147,22 +118,6 @@ bool MainWindow::initializeUI()
     QSize listSize(250,100);
     QSize buttonSize(250,25);
     QSize labelSize(250,25);
-
-    OpenGLRenderer::OpenGLRenderSpecs previewSpecs = videoSpecs;
-    previewSpecs.frameType.width = listSize.width();
-    previewSpecs.frameType.height = listSize.width();
-
-    previewDisplay = new OpenGLDisplay(mainUIScreen,
-                                       previewSpecs,
-                                       QSurfaceFormat::defaultFormat(),
-                                       invertFilter->getOpenGLContext());
-    previewDisplay->resize(previewSpecs.frameType.width,previewSpecs.frameType.height);
-
-    QObject::connect(invertFilter,&InvertFilter::frameReady,previewDisplay,&OpenGLDisplay::setFrame);
-    QWidget* previewDisplayContainer = QWidget::createWindowContainer(previewDisplay,
-                                                                      mainWidget);
-    previewDisplayContainer->setFixedSize(QSize(previewSpecs.frameType.width,previewSpecs.frameType.height));
-    previewDisplayContainer->setSizePolicy(QSizePolicy::Policy::Fixed,QSizePolicy::Policy::Fixed);
 
     textFPS = new QLineEdit(mainWidget);
     textFPS->setMinimumSize(labelSize);
@@ -184,11 +139,6 @@ bool MainWindow::initializeUI()
     pbStopVideo = new QPushButton(mainWidget);
     pbStopVideo->setMinimumSize(buttonSize);
     pbStopVideo->setText("Stop");
-
-    mainLayout->setSpacing(/*previewDisplayContainer->width()/16.0*/0);
-    mainLayout->setMargin(previewDisplayContainer->width()/16.0);
-
-    mainLayout->addWidget(previewDisplayContainer,-1,Qt::AlignCenter);
 
     mainLayout->addWidget(textFPS,-1,Qt::AlignCenter);
     mainLayout->addWidget(lActualRenderFPS,-1,Qt::AlignCenter);

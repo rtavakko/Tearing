@@ -14,7 +14,7 @@
 #include <trianglerenderer.h>
 #include <invertfilter.h>
 
-#include <videothread.h>
+#include <opengldisplay.h>
 
 namespace Ui {
 class MainWindow;
@@ -50,7 +50,6 @@ signals:
 
 private:
     bool initialize();
-    bool initializeThreaded();
 
     bool initializeUI();
 
@@ -78,7 +77,7 @@ private:
     //Renders a texture on a separate thread
     TriangleRenderer* triangleRenderer;
 
-    //Invert filter
+    //Invert filter; takes triangle texture and inverts its colors
     InvertFilter* invertFilter;
 
     QThread* renderThread;
@@ -86,12 +85,7 @@ private:
 
     //Displays the texture rendered by textureRenderer on the GUI thread
     unsigned int numDisplays;
-    std::vector<OpenGLDisplay*> textureDisplay;
-
-    OpenGLDisplay* previewDisplay;
-
-    //Threaded
-    VideoThread* videoRenderThread;
+    std::vector<OpenGLDisplay*> displays;
 
     //Used for timing
     std::chrono::time_point<std::chrono::high_resolution_clock> t_startRender;
